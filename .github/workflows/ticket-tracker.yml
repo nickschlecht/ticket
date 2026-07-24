@@ -67,6 +67,7 @@ jobs:
           echo "TICKETMASTER_URL_SET=${TICKETMASTER_URL:+set}"
           echo "STUBHUB_URL_SET=${STUBHUB_URL:+set}"
           echo "SEATGEEK_URL_SET=${SEATGEEK_URL:+set}"
+          echo "Running tracker with SEND_TEST_EMAIL=${SEND_TEST_EMAIL}"
           python main.py
 
       - name: Save tracker state

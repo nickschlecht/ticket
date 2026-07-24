@@ -289,7 +289,13 @@ def scrape_tickets(marketplace: str, config: Dict[str, list]) -> Dict[str, float
         page_content = page.content()
         text_candidates = [body_text, page_content]
         combined_text = "\n".join(text for text in text_candidates if text)
-        print(f"Body text snippet for {marketplace}: {combined_text[:5000]}")
+        print(f"Body text snippet for {marketplace}: {combined_text[:8000]}")
+        if not body_text:
+            print(f"No visible body text captured for {marketplace}")
+        if "captcha" in combined_text.lower() or "verify you are human" in combined_text.lower():
+            print(f"Captcha or human verification detected for {marketplace}")
+        if "access denied" in combined_text.lower() or "forbidden" in combined_text.lower():
+            print(f"Access denied or forbidden response for {marketplace}")
 
         parsed_matches = extract_section_price_pairs_from_text(combined_text)
         if parsed_matches:

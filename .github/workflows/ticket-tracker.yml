@@ -18,9 +18,9 @@ permissions:
   contents: read
 
 env:
-  RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
   EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
-  EMAIL_FROM: ${{ secrets.EMAIL_FROM || 'alerts@yourdomain.com' }}
+  EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+  APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
   PRICE_FILE: prices.json
   SEND_TEST_EMAIL: ${{ inputs.send_test_email || vars.SEND_TEST_EMAIL || 'false' }}
   TICKETMASTER_URL: https://www.ticketmaster.com/league-of-legends-world-championships-brooklyn-new-york-11-14-2026/event/300064EA0334EE28?referrer=https%3A%2F%2Fwww.ticketmaster.com%2Fleague-of-legends-world-championships-tickets%2Fartist%2F1906735
@@ -62,7 +62,8 @@ jobs:
         run: |
           echo "SEND_TEST_EMAIL=${SEND_TEST_EMAIL}"
           echo "EMAIL_ADDRESS_SET=${EMAIL_ADDRESS:+set}"
-          echo "RESEND_API_KEY_SET=${RESEND_API_KEY:+set}"
+          echo "EMAIL_FROM_SET=${EMAIL_FROM:+set}"
+          echo "APP_PASSWORD_SET=${APP_PASSWORD:+set}"
           echo "TICKETMASTER_URL_SET=${TICKETMASTER_URL:+set}"
           echo "STUBHUB_URL_SET=${STUBHUB_URL:+set}"
           echo "SEATGEEK_URL_SET=${SEATGEEK_URL:+set}"

@@ -1,11 +1,12 @@
 import json
 import os
 import re
+import smtplib
 from datetime import date
+from email.message import EmailMessage
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-import resend
 from playwright.sync_api import sync_playwright
 
 
@@ -142,23 +143,38 @@ def log_message(message: str) -> None:
 
 
 def send_email(subject: str, html: str) -> bool:
-    api_key = os.environ.get("RESEND_API_KEY")
     to_email = os.environ.get("EMAIL_ADDRESS") or os.environ.get("EMAIL")
+    from_email = os.environ.get("EMAIL_FROM") or os.environ.get("FROM_EMAIL")
+    app_password = os.environ.get("APP_PASSWORD")
 
-    if not api_key or not to_email:
-        print("Skipping email because RESEND_API_KEY or EMAIL_ADDRESS is not configured.")
+    if not to_email:
+        print("Skipping email because EMAIL_ADDRESS is not configured.")
         return False
 
-    resend.api_key = api_key
-    resend.Emails.send(
-        {
-            "from": os.environ.get("EMAIL_FROM", "alerts@yourdomain.com"),
-            "to": [to_email],
-            "subject": subject,
-            "html": html,
-        }
-    )
-    return True
+    if not from_email:
+        print("Skipping email because EMAIL_FROM is not configured.")
+        return False
+
+    if not app_password:
+        print("Skipping email because APP_PASSWORD is not configured.")
+        return False
+
+    message = EmailMessage()
+    message["Subject"] = subject
+    message["From"] = from_email
+    message["To"] = to_email
+    message.set_content("This email contains HTML content. Please view it in an HTML-capable client.")
+    message.add_alternative(html, subtype="html")
+
+    try:
+        with smtplib.SMTP("smtp.gmail.com", 587) as smtp:
+            smtp.starttls()
+            smtp.login(from_email, app_password)
+            smtp.send_message(message)
+        return True
+    except Exception as exc:
+        print(f"Email send failed: {exc}")
+        return False
 
 
 def send_test_email() -> bool:

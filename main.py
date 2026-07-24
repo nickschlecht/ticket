@@ -159,6 +159,8 @@ def send_email(subject: str, html: str) -> bool:
         print("Skipping email because APP_PASSWORD is not configured.")
         return False
 
+    print(f"Sending email from {from_email} to {to_email}")
+
     message = EmailMessage()
     message["Subject"] = subject
     message["From"] = from_email

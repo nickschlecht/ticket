@@ -10,24 +10,12 @@ from playwright.sync_api import sync_playwright
 
 
 ROOT_DIR = Path(__file__).resolve().parent
-
-
-def load_env_file(path: Optional[Path] = None) -> None:
-    env_path = path or ROOT_DIR / ".env"
-    if not env_path.exists():
-        return
-
-    for raw_line in env_path.read_text(encoding="utf-8").splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        key, value = line.split("=", 1)
-        os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
-
-
-load_env_file()
 PRICE_FILE = Path(os.environ.get("PRICE_FILE", str(ROOT_DIR / "prices.json")))
 LOG_FILE = Path(os.environ.get("LOG_FILE", str(ROOT_DIR / "tracker.log")))
+
+TICKETMASTER_URL = "https://www.ticketmaster.com/league-of-legends-world-championships-brooklyn-new-york-11-14-2026/event/300064EA0334EE28?referrer=https%3A%2F%2Fwww.ticketmaster.com%2Fleague-of-legends-world-championships-tickets%2Fartist%2F1906735"
+STUBHUB_URL = "https://www.stubhub.com/league-of-legends-world-championship-brooklyn-tickets-11-14-2026/event/161251368/?backUrl=%2Fleague-of-legends-world-championship-tickets%2Fgrouping%2F150363310&lt=45.791&lg=-122.529&quantity=1"
+SEATGEEK_URL = "https://seatgeek.com/league-of-legends-tickets/esports/2026-11-14-12-pm/18390890?quantity=1"
 
 PRICE_LIMITS = {
     "7": 2000,
@@ -60,17 +48,17 @@ def get_limit(section_key: str) -> Optional[float]:
 def get_markets() -> Dict[str, Dict[str, object]]:
     return {
         "ticketmaster": {
-            "url": os.environ.get("TICKETMASTER_URL", "PUT_TICKET_URL_HERE"),
+            "url": TICKETMASTER_URL,
             "section_selectors": [".ticket-section .section", ".section", "[data-testid='section-name']"],
             "price_selectors": [".ticket-section .price", ".price", "[data-testid='price']"],
         },
         "stubhub": {
-            "url": os.environ.get("STUBHUB_URL", "PUT_TICKET_URL_HERE"),
+            "url": STUBHUB_URL,
             "section_selectors": [".ticket-section .section", ".section", "[data-testid='section-name']"],
             "price_selectors": [".ticket-section .price", ".price", "[data-testid='price']"],
         },
         "seatgeek": {
-            "url": os.environ.get("SEATGEEK_URL", "PUT_TICKET_URL_HERE"),
+            "url": SEATGEEK_URL,
             "section_selectors": [".ticket-section .section", ".section", "[data-testid='section-name']"],
             "price_selectors": [".ticket-section .price", ".price", "[data-testid='price']"],
         },

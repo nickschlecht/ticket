@@ -46,10 +46,6 @@ jobs:
           mkdir -p .
           if [ ! -f prices.json ]; then echo '{}' > prices.json; fi
 
-      - name: Load environment file
-        run: |
-          if [ -f .env ]; then set -a; . ./.env; set +a; fi
-
       - name: Run tracker
         run: |
           echo "SEND_TEST_EMAIL=${SEND_TEST_EMAIL}"

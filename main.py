@@ -78,8 +78,28 @@ def normalize_price(value: object) -> float:
 
 def normalize_section(value: object) -> str:
     text = str(value or "")
-    match = re.search(r"(\d+)", text)
+    match = re.search(r"\b(?:section|sec|row|zone)\b[^\d]*(\d+)", text, re.IGNORECASE)
     return match.group(1) if match else ""
+
+
+def extract_section_price_pairs_from_text(text: str) -> Dict[str, float]:
+    pairs: Dict[str, float] = {}
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+
+    for index, line in enumerate(lines):
+        section = normalize_section(line)
+        if not section:
+            continue
+
+        for candidate in lines[index + 1 : index + 3]:
+            try:
+                price = normalize_price(candidate)
+            except ValueError:
+                continue
+            pairs[section] = price
+            break
+
+    return pairs
 
 
 def should_alert(price: float, limit: float, previous_price: Optional[float]) -> bool:
@@ -230,6 +250,22 @@ def scrape_tickets(marketplace: str, config: Dict[str, list]) -> Dict[str, float
         page = browser.new_page()
         page.goto(url, wait_until="domcontentloaded")
         page.wait_for_timeout(5000)
+
+        page_content = page.content()
+        text_candidates = []
+        for selector in ["body", "main", "#app", "#root"]:
+            try:
+                text_candidates.append(page.locator(selector).inner_text())
+            except Exception:
+                continue
+
+        text_candidates.append(page_content)
+        combined_text = "\n".join(text for text in text_candidates if text)
+        parsed_matches = extract_section_price_pairs_from_text(combined_text)
+        if parsed_matches:
+            tickets.update(parsed_matches)
+            browser.close()
+            return tickets
 
         for section_selector in config.get("section_selectors", []):
             for price_selector in config.get("price_selectors", []):

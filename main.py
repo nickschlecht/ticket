@@ -270,9 +270,15 @@ def scrape_tickets(marketplace: str, config: Dict[str, list]) -> Dict[str, float
         browser = playwright.chromium.launch(headless=True)
         page = browser.new_page()
         print(f"Opening {marketplace} at {url}")
-        page.goto(url, wait_until="domcontentloaded")
-        page.wait_for_timeout(5000)
-        print(f"Loaded {marketplace} page title: {page.title()}")
+        try:
+            response = page.goto(url, wait_until="domcontentloaded", timeout=60000)
+            page.wait_for_timeout(5000)
+            print(f"Loaded {marketplace} page title: {page.title()}")
+            print(f"Response status for {marketplace}: {response.status if response else 'no-response'}")
+        except Exception as exc:
+            print(f"Navigation failed for {marketplace}: {exc}")
+            browser.close()
+            return {}
 
         page_content = page.content()
         text_candidates = []

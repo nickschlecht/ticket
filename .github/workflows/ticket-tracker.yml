@@ -50,7 +50,11 @@ jobs:
           if [ ! -f prices.json ]; then echo '{}' > prices.json; fi
 
       - name: Run tracker
-        run: python main.py
+        run: |
+          echo "SEND_TEST_EMAIL=${SEND_TEST_EMAIL}"
+          echo "EMAIL_ADDRESS_SET=${EMAIL_ADDRESS:+set}"
+          echo "RESEND_API_KEY_SET=${RESEND_API_KEY:+set}"
+          python main.py
 
       - name: Save tracker state
         uses: actions/cache@v4

@@ -1,0 +1,58 @@
+name: Ticket Tracker
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/15 * * * *'
+
+permissions:
+  contents: read
+
+env:
+  TICKETMASTER_URL: ${{ secrets.TICKETMASTER_URL }}
+  STUBHUB_URL: ${{ secrets.STUBHUB_URL }}
+  SEATGEEK_URL: ${{ secrets.SEATGEEK_URL }}
+  RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+  EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
+  EMAIL_FROM: ${{ secrets.EMAIL_FROM || 'alerts@yourdomain.com' }}
+  PRICE_FILE: prices.json
+
+jobs:
+  run-tracker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          python -m playwright install --with-deps chromium
+
+      - name: Restore tracker state
+        uses: actions/cache@v4
+        with:
+          path: prices.json
+          key: ticket-tracker-state
+
+      - name: Prepare tracker state
+        run: |
+          mkdir -p .
+          if [ ! -f prices.json ]; then echo '{}' > prices.json; fi
+
+      - name: Run tracker
+        run: python main.py
+
+      - name: Save tracker state
+        uses: actions/cache@v4
+        with:
+          path: prices.json
+          key: ticket-tracker-state

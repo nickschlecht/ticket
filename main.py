@@ -13,9 +13,9 @@ ROOT_DIR = Path(__file__).resolve().parent
 PRICE_FILE = Path(os.environ.get("PRICE_FILE", str(ROOT_DIR / "prices.json")))
 LOG_FILE = Path(os.environ.get("LOG_FILE", str(ROOT_DIR / "tracker.log")))
 
-TICKETMASTER_URL = "https://www.ticketmaster.com/league-of-legends-world-championships-brooklyn-new-york-11-14-2026/event/300064EA0334EE28?referrer=https%3A%2F%2Fwww.ticketmaster.com%2Fleague-of-legends-world-championships-tickets%2Fartist%2F1906735"
-STUBHUB_URL = "https://www.stubhub.com/league-of-legends-world-championship-brooklyn-tickets-11-14-2026/event/161251368/?backUrl=%2Fleague-of-legends-world-championship-tickets%2Fgrouping%2F150363310&lt=45.791&lg=-122.529&quantity=1"
-SEATGEEK_URL = "https://seatgeek.com/league-of-legends-tickets/esports/2026-11-14-12-pm/18390890?quantity=1"
+TICKETMASTER_URL = os.environ.get("TICKETMASTER_URL", "https://www.ticketmaster.com/league-of-legends-world-championships-brooklyn-new-york-11-14-2026/event/300064EA0334EE28?referrer=https%3A%2F%2Fwww.ticketmaster.com%2Fleague-of-legends-world-championships-tickets%2Fartist%2F1906735")
+STUBHUB_URL = os.environ.get("STUBHUB_URL", "https://www.stubhub.com/league-of-legends-world-championship-brooklyn-tickets-11-14-2026/event/161251368/?backUrl=%2Fleague-of-legends-world-championship-tickets%2Fgrouping%2F150363310&lt=45.791&lg=-122.529&quantity=1")
+SEATGEEK_URL = os.environ.get("SEATGEEK_URL", "https://seatgeek.com/league-of-legends-tickets/esports/2026-11-14-12-pm/18390890?quantity=1")
 
 PRICE_LIMITS = {
     "7": 2000,
@@ -165,6 +165,7 @@ def send_test_email() -> bool:
     html = """
     <h2>Tracker test email</h2>
     <p>This is a test email from your GitHub Actions ticket tracker.</p>
+    <p>It confirms that the email delivery path is working.</p>
     """
     return send_email("LoL Worlds Ticket Tracker Test", html)
 
@@ -240,16 +241,20 @@ def send_daily_summary(state: Dict[str, Any]) -> None:
 def scrape_tickets(marketplace: str, config: Dict[str, list]) -> Dict[str, float]:
     url = config.get("url", "")
     if not url or "PUT_TICKET_URL_HERE" in url:
-        print(f"Skipping {marketplace}: no URL configured.")
+        print(f"Skipping {marketplace}: no URL configured. Resolved URL: {url!r}")
         return {}
+
+    print(f"Checking {marketplace}: {url}")
 
     tickets: Dict[str, float] = {}
 
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=True)
         page = browser.new_page()
+        print(f"Opening {marketplace} at {url}")
         page.goto(url, wait_until="domcontentloaded")
         page.wait_for_timeout(5000)
+        print(f"Loaded {marketplace} page title: {page.title()}")
 
         page_content = page.content()
         text_candidates = []

@@ -2,6 +2,15 @@ name: Ticket Tracker
 
 on:
   workflow_dispatch:
+    inputs:
+      send_test_email:
+        description: 'Send a test email to verify delivery'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
   schedule:
     - cron: '*/15 * * * *'
 
@@ -13,7 +22,10 @@ env:
   EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
   EMAIL_FROM: ${{ secrets.EMAIL_FROM || 'alerts@yourdomain.com' }}
   PRICE_FILE: prices.json
-  SEND_TEST_EMAIL: ${{ vars.SEND_TEST_EMAIL || 'false' }}
+  SEND_TEST_EMAIL: ${{ inputs.send_test_email || vars.SEND_TEST_EMAIL || 'false' }}
+  TICKETMASTER_URL: https://www.ticketmaster.com/league-of-legends-world-championships-brooklyn-new-york-11-14-2026/event/300064EA0334EE28?referrer=https%3A%2F%2Fwww.ticketmaster.com%2Fleague-of-legends-world-championships-tickets%2Fartist%2F1906735
+  STUBHUB_URL: https://www.stubhub.com/league-of-legends-world-championship-brooklyn-tickets-11-14-2026/event/161251368/?backUrl=%2Fleague-of-legends-world-championship-tickets%2Fgrouping%2F150363310&lt=45.791&lg=-122.529&quantity=1
+  SEATGEEK_URL: https://seatgeek.com/league-of-legends-tickets/esports/2026-11-14-12-pm/18390890?quantity=1
 
 jobs:
   run-tracker:
@@ -51,7 +63,9 @@ jobs:
           echo "SEND_TEST_EMAIL=${SEND_TEST_EMAIL}"
           echo "EMAIL_ADDRESS_SET=${EMAIL_ADDRESS:+set}"
           echo "RESEND_API_KEY_SET=${RESEND_API_KEY:+set}"
-          grep -n "TICKETMASTER_URL\|STUBHUB_URL\|SEATGEEK_URL" main.py
+          echo "TICKETMASTER_URL_SET=${TICKETMASTER_URL:+set}"
+          echo "STUBHUB_URL_SET=${STUBHUB_URL:+set}"
+          echo "SEATGEEK_URL_SET=${SEATGEEK_URL:+set}"
           python main.py
 
       - name: Save tracker state

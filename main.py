@@ -178,12 +178,52 @@ def send_email(subject: str, html: str) -> bool:
         return False
 
 
-def send_test_email() -> bool:
-    html = """
+def scrape_all_markets() -> Dict[str, Dict[str, float]]:
+    results: Dict[str, Dict[str, float]] = {}
+    for marketplace, config in MARKETS.items():
+        scraped_tickets = scrape_tickets(marketplace, config)
+        if scraped_tickets:
+            results[marketplace] = scraped_tickets
+    return results
+
+
+def build_ticket_report_html(scraped_results: Dict[str, Dict[str, float]]) -> str:
+    rows = []
+    for marketplace in sorted(scraped_results):
+        for section, price in sorted(scraped_results[marketplace].items()):
+            section_key = normalize_section(section)
+            if not section_key:
+                continue
+            rows.append(
+                f"<tr><td>{marketplace}</td><td>{section_key}</td><td>${price:.2f}</td></tr>"
+            )
+
+    if not rows:
+        return """
+        <h2>Tracker test email</h2>
+        <p>This is a test email from your GitHub Actions ticket tracker.</p>
+        <p>It confirms that the email delivery path is working.</p>
+        <p>No ticket price data was found from the marketplace scrape.</p>
+        """
+
+    return f"""
     <h2>Tracker test email</h2>
     <p>This is a test email from your GitHub Actions ticket tracker.</p>
     <p>It confirms that the email delivery path is working.</p>
+    <table>
+      <thead>
+        <tr><th>Marketplace</th><th>Section</th><th>Price</th></tr>
+      </thead>
+      <tbody>
+        {''.join(rows)}
+      </tbody>
+    </table>
     """
+
+
+def send_test_email() -> bool:
+    scraped_results = scrape_all_markets()
+    html = build_ticket_report_html(scraped_results)
     return send_email("LoL Worlds Ticket Tracker Test", html)
 
 

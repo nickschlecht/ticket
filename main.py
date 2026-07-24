@@ -165,8 +165,7 @@ def send_email(subject: str, html: str) -> bool:
     message["Subject"] = subject
     message["From"] = from_email
     message["To"] = to_email
-    message.set_content("This email contains HTML content. Please view it in an HTML-capable client.")
-    message.add_alternative(html, subtype="html")
+    message.set_content(html, subtype="html")
 
     try:
         with smtplib.SMTP("smtp.gmail.com", 587) as smtp:
@@ -269,10 +268,11 @@ def scrape_tickets(marketplace: str, config: Dict[str, list]) -> Dict[str, float
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=True)
         page = browser.new_page()
+        page.set_default_timeout(60000)
         print(f"Opening {marketplace} at {url}")
         try:
-            response = page.goto(url, wait_until="domcontentloaded", timeout=60000)
-            page.wait_for_timeout(5000)
+            response = page.goto(url, wait_until="domcontentloaded")
+            page.wait_for_timeout(8000)
             print(f"Loaded {marketplace} page title: {page.title()}")
             print(f"Response status for {marketplace}: {response.status if response else 'no-response'}")
         except Exception as exc:
@@ -280,43 +280,34 @@ def scrape_tickets(marketplace: str, config: Dict[str, list]) -> Dict[str, float
             browser.close()
             return {}
 
-        page_content = page.content()
-        text_candidates = []
-        for selector in ["body", "main", "#app", "#root"]:
-            try:
-                text_candidates.append(page.locator(selector).inner_text())
-            except Exception:
-                continue
+        body_text = ""
+        try:
+            body_text = page.locator("body").inner_text(timeout=20000)
+        except Exception:
+            body_text = ""
 
-        text_candidates.append(page_content)
+        page_content = page.content()
+        text_candidates = [body_text, page_content]
         combined_text = "\n".join(text for text in text_candidates if text)
+        print(f"Body text snippet for {marketplace}: {combined_text[:5000]}")
+
         parsed_matches = extract_section_price_pairs_from_text(combined_text)
         if parsed_matches:
             tickets.update(parsed_matches)
             browser.close()
             return tickets
 
-        for section_selector in config.get("section_selectors", []):
-            for price_selector in config.get("price_selectors", []):
+        price_candidates = re.findall(r"\$\s?(\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?)", combined_text)
+        if price_candidates:
+            for value in price_candidates[:10]:
                 try:
-                    sections = page.locator(section_selector)
-                    prices = page.locator(price_selector)
-                    count = min(sections.count(), prices.count())
-
-                    for index in range(count):
-                        section_text = sections.nth(index).inner_text().strip()
-                        price_text = prices.nth(index).inner_text().strip()
-                        if not section_text or not price_text:
-                            continue
-                        price = normalize_price(price_text)
-                        tickets[section_text] = price
-
-                    if tickets:
-                        browser.close()
-                        return tickets
-                except Exception as exc:
-                    print(f"Selector mismatch for {marketplace}: {exc}")
+                    price = normalize_price(value)
+                    tickets[f"price-{len(tickets) + 1}"] = price
+                except ValueError:
                     continue
+            if tickets:
+                browser.close()
+                return tickets
 
         browser.close()
 

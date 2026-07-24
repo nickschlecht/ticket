@@ -9,9 +9,6 @@ permissions:
   contents: read
 
 env:
-  TICKETMASTER_URL: ${{ secrets.TICKETMASTER_URL }}
-  STUBHUB_URL: ${{ secrets.STUBHUB_URL }}
-  SEATGEEK_URL: ${{ secrets.SEATGEEK_URL }}
   RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
   EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
   EMAIL_FROM: ${{ secrets.EMAIL_FROM || 'alerts@yourdomain.com' }}
@@ -48,6 +45,10 @@ jobs:
         run: |
           mkdir -p .
           if [ ! -f prices.json ]; then echo '{}' > prices.json; fi
+
+      - name: Load environment file
+        run: |
+          if [ -f .env ]; then set -a; . ./.env; set +a; fi
 
       - name: Run tracker
         run: |

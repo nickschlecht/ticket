@@ -19,7 +19,7 @@ permissions:
 
 env:
   EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
-  EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+  EMAIL_FROM: ${{ secrets.EMAIL_FROM || secrets.EMAIL_ADDRESS }}
   APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
   PRICE_FILE: prices.json
   SEND_TEST_EMAIL: ${{ inputs.send_test_email || vars.SEND_TEST_EMAIL || 'false' }}

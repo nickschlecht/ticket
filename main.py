@@ -153,6 +153,14 @@ def send_email(subject: str, html: str) -> bool:
     return True
 
 
+def send_test_email() -> bool:
+    html = """
+    <h2>Tracker test email</h2>
+    <p>This is a test email from your GitHub Actions ticket tracker.</p>
+    """
+    return send_email("LoL Worlds Ticket Tracker Test", html)
+
+
 def send_threshold_alert(section: str, price: float, marketplace: str, url: str) -> None:
     html = f"""
     <h2>Threshold hit!</h2>
@@ -293,6 +301,12 @@ def check_prices() -> None:
 
 def main() -> None:
     try:
+        if os.environ.get("SEND_TEST_EMAIL", "false").lower() == "true":
+            sent = send_test_email()
+            print(f"Test email sent: {sent}")
+            log_message(f"Test email sent: {sent}")
+            return
+
         check_prices()
         print("Price check completed.")
         log_message("Price check completed.")

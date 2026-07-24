@@ -16,6 +16,7 @@ env:
   EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
   EMAIL_FROM: ${{ secrets.EMAIL_FROM || 'alerts@yourdomain.com' }}
   PRICE_FILE: prices.json
+  SEND_TEST_EMAIL: ${{ vars.SEND_TEST_EMAIL || 'false' }}
 
 jobs:
   run-tracker:
